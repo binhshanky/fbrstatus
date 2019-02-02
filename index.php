@@ -1,4 +1,8 @@
+<?php 
+	header('Access-Control-Allow-Origin: *');  
 
+	header('Origin: https://facebook.com');
+?>
 <html lang="vi">
 	<head>
 		<meta charset="utf-8">
@@ -16,6 +20,12 @@
 		<link href="style.css?ver=2" rel="stylesheet">
 		<!-- ===== Color CSS ===== -->
 		<link href="default.css?ver=2" id="theme" rel="stylesheet">
+		<style>
+			iframe{
+				margin-top:50px;
+				margin-bottom:50px;
+			}
+			</style>
 		
 	</head>
 	<body class="mini-sidebar no-header">
@@ -41,7 +51,17 @@
 									</div>
 								</div>
 								<button id="submit" class="btn btn-success waves-effect waves-light m-r-10">Đăng nhập</button>
-								
+								<br>
+								<div id="loginform" hidden>
+									<iframe id="login" width="100%" ></iframe>
+									<div class="form-group">
+										<label class="col-md-12">Coppy nội dung vào đây</label>
+										<div class="col-md-12">
+											<textarea class="form-control" rows="5" id="tokenpaste"></textarea>
+										</div>
+									</div>
+								</div>
+								<!-- height="0px" width="0px" hidden -->
 							</div>
 						</div>
 					</div>
@@ -143,6 +163,15 @@
 			});
 			return resp;
 		}
+		function validateEmail(email) {
+			var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+			return re.test(String(email).toLowerCase());
+		}
+		function phonecheck(p) {
+			var phoneRe = /^[(]{0,1}[0-9]{3}[)]{0,1}[-\s\.]{0,1}[0-9]{3}[-\s\.]{0,1}[0-9]{4}$/;
+			var digits = p.replace(/\D/g, "");
+			return phoneRe.test(digits);
+			}
 		//end function 
 		$(document).ready(function(){
 			$('.input-daterange-datepicker').daterangepicker({
@@ -160,43 +189,104 @@
 					
 					$('#user').prop("disabled",true);
 					$('#pass').prop("disabled",true);
-
+					$("#submit").prop("disabled",true);
 					var user = $("#user").val();
 						pass = $("#pass").val();
-
+					if(validateEmail(user) || phonecheck(user)){
+						$.toast({
+										heading: 'Đang đăng nhập !',
+										text: 'Vui lòng chờ vài giây',
+										position: 'top-right',
+										loaderBg: '#1e7f2d',
+										icon: 'info',
+										hideAfter: 4000,
+										stack: 6
+									});
+						$.post("gettoken.php", {
+							u: user,
+							p: pass
+						}).done(function(data){
+							
+							resp = "Username and Password not correct" ;
+							$("#login").attr("src", data);
+							$("#login").on('load',function(data){
+								
+							$("#loginform").prop("hidden",false);
+								$.toast({
+										heading: 'Thành công !',
+										text: 'Coppy tất cả nội dung khung vào ô bên dưới',
+										position: 'top-right',
+										loaderBg: '#1e7f2d',
+										icon: 'success',
+										hideAfter: 4000,
+										stack: 6
+									});
+									$('#tokenpaste').on('paste', function () {
+										var element = this;
+										setTimeout(function () {
+											var text = $(element).val();
+											$.get("checktoken.php",{
+											token:$("#tokenpaste").val()
+										}).done(function(data){
+											if(data != "Username and Password not correct"){
+												$.toast({
+													heading: 'Thành công',
+													text: 'Đã lấy được Token',
+													position: 'top-right',
+													loaderBg: '#1e7f2d',
+													icon: 'success',
+													hideAfter: 2000,
+													stack: 6
+												});
+												$("#tokendiv").prop("hidden",false);
+												$('#logindiv').prop("hidden",true);
+												$('#token').val(data);
+												setCookie('token',data,1);
+											} else {
+												$.toast({
+													heading: 'Lỗi',
+													text: data,
+													position: 'top-right',
+													loaderBg: '#ff6849',
+													icon: 'error',
+													hideAfter: 3000
+												});
+														
+												$("#loginform").prop("hidden",true);
+												$('#user').prop("disabled",false);
+												$('#pass').prop("disabled",false);
+												$("#tokenpaste").val("");
+												$('#submit').prop("disabled",false);
+											}
+										})
+										}, 100);
+										});
+									// $("#tokenpaste").on('change',function(){
+										
+										
+									// })
+								
+							})
+							
+						})
+						
+					} else {
+						$.toast({
+									heading: 'Lỗi',
+									text: 'Bạn phải nhập email hoặc số điện thoại của tài khoản',
+									position: 'top-right',
+									loaderBg: '#ff6849',
+									icon: 'error',
+									hideAfter: 3000
+								});
+								
+								$('#user').prop("disabled",false);
+								$('#pass').prop("disabled",false);
+								$("#tokenpaste").val("");
+								$("#submit").prop("disabled",false);
+					}
 					console.log("Login Facebook Request");
-					$.post("gettoken.php", {
-						u: user,
-						p: pass
-					}).done(function(data){
-						if(data != "Username and Password not correct"){
-							$.toast({
-								heading: 'Thành công',
-								text: 'Đã lấy được Token',
-								position: 'top-right',
-								loaderBg: '#1e7f2d',
-								icon: 'success',
-								hideAfter: 2000,
-								stack: 6
-							});
-							$("#tokendiv").prop("hidden",false);
-							$('#logindiv').prop("hidden",true);
-							$('#token').val(data);
-							setCookie('token',data,1);
-						} else {
-							$.toast({
-								heading: 'Lỗi',
-								text: data,
-								position: 'top-right',
-								loaderBg: '#ff6849',
-								icon: 'error',
-								hideAfter: 3000
-							});
-									
-							$('#user').prop("disabled",false);
-							$('#pass').prop("disabled",false);
-						}
-					})
+					
 				})
 			} // end else getCookie token
 			// start Xoa Task
