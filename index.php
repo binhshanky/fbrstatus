@@ -81,7 +81,7 @@
 								<div class="form-group">
                                     <div class="example">
                                         <h5 class="box-title m-t-30">Xoá các Status trong phạm vi</h5>
-                                        <input type="text" id="phamvi" class="form-control input-daterange-datepicker" name="daterange" value="02/02/2019 - 02/02/2019" /> </div>
+                                        <input type="text" id="phamvi" class="form-control input-daterange-datepicker" name="daterange" value="<? echo date('d/m/Y - d/m/Y');?>" /> </div>
                                 </div>
 								<button id="xoa" class="btn btn-success waves-effect waves-light m-r-10">Thực hiện</button>
 							</div>
